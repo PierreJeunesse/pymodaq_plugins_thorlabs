@@ -40,15 +40,35 @@ from pymodaq.utils import daq_utils as utils
 from pymodaq.utils.logger import set_logger, get_module_name
 logger = set_logger(get_module_name(__file__))
 if utils.is_64bits():
-    path_dll = str(Path(os.environ['VXIPNPPATH64']).joinpath('Win64', 'Bin'))
+    path_dll ="C:\Program Files\IVI Foundation\VISA\Win64\Bin" #str(Path(os.environ['VXIPNPPATH64']).joinpath('Win64', 'Bin'))
 else:
     path_dll = str(Path(os.environ['VXIPNPPATH']).joinpath('WinNT', 'Bin'))
 os.add_dll_directory(path_dll)
 
+# Chemins personnalisés pour les DLL et le wrapper
+custom_dll_path = "C:\\Program Files\\IVI Foundation\\VISA\\Win64\\Bin"
+custom_wrapper_path = "C:\\Program Files (x86)\\IVI Foundation\\VISA\\WinNT\\TLPM\\Examples\\Python"
+
+# Ajoutez le chemin personnalisé à sys.path
+sys.path.insert(0, custom_wrapper_path)
 
 def tlpm_path(tlpm: Path):
-    return Path(os.environ['VXIPNPPATH']).joinpath('WinNT', 'TLPM', tlpm, 'Python')
-
+    vxipnppath = os.environ.get('VXIPNPPATH')
+    if vxipnppath is not None:
+        return Path(vxipnppath).joinpath('WinNT', 'TLPM', tlpm, 'Python')
+    else:
+        # Utilisez votre chemin réel comme chemin par défaut
+        return Path(custom_wrapper_path).joinpath(tlpm, 'Python')
+    #return Path(os.environ['VXIPNPPATH']).joinpath('WinNT', 'TLPM', tlpm, 'Python')
+# Tentez d'importer le module TLPM
+try:
+    import TLPM
+except ModuleNotFoundError as e:
+    error = f"The *TLPM.py* python wrapper of thorlabs TLPM dll could not be located on your system. Check if present" \
+            f" in one of these path:\n" \
+            f"{tlpm_path('Example')}\n" \
+            f"{tlpm_path('Examples')}"
+    raise ModuleNotFoundError(error)
 
 module_error = True
 for example_str in ['Example', 'Examples']:
